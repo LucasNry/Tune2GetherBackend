@@ -22,7 +22,7 @@ public class GetMusicController {
     private StreamingServiceFacadeFactory streamingServiceFacadeFactory;
 
     @GetMapping("getMusic")
-    public Map<String, String> getMusic(@RequestParam("l") String sanitizedUrl) {
+    public Map<String, String> getMusic(@RequestParam("l") String sanitizedUrl) throws Exception {
         Map<String, String> songURLsByDomainName = new HashMap<>();
 
         StreamingService streamingService = StreamingService.getServiceFromDomainName(getDomainNameFromURL(sanitizedUrl));
@@ -47,12 +47,15 @@ public class GetMusicController {
     private String getDomainNameFromURL(String sanitizedURL) {
         Pattern pattern = Pattern.compile(BETWEEN_DOTS_REGEX, Pattern.MULTILINE);
         Matcher matcher = pattern.matcher(sanitizedURL);
-        String unformattedServiceName = matcher.group(0);
+        if (matcher.find()) {
+            String unformattedServiceName = matcher.group(0);
+            return unformattedServiceName.replaceAll("\\.", "");
+        }
 
-        return unformattedServiceName.replaceAll(".", "");
+        return null;
     }
 
-    private Song getSongInformation(String sanitizedURL, StreamingService streamingService) {
+    private Song getSongInformation(String sanitizedURL, StreamingService streamingService) throws Exception {
         StreamingServiceFacade originServiceFacade = streamingServiceFacadeFactory.getStreamingServiceFacade(streamingService);
 
         String songId = originServiceFacade.getSongIdFromURL(sanitizedURL);
