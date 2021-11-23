@@ -28,16 +28,19 @@ public class GetMusicController {
         StreamingService streamingService = StreamingService.getServiceFromDomainName(getDomainNameFromURL(sanitizedUrl));
         Song requestedSong = getSongInformation(sanitizedUrl, streamingService);
 
-        songURLsByDomainName.put(streamingService.getDomainName(), sanitizedUrl); // TODO: de-sanitize the url before adding it to the map
+        songURLsByDomainName.put(streamingService.getDomainName(), requestedSong.toString()); // TODO: de-sanitize the url before adding it to the map
 
         //TODO: Save track id on fake DB
 
         for (StreamingService service : StreamingService.values()) {
             if (service != streamingService) {
-                StreamingServiceFacade streamingServiceFacade = streamingServiceFacadeFactory.getStreamingServiceFacade(service);
-                Song song = streamingServiceFacade.getSongFromSongObject(requestedSong);
+                try {
+                    StreamingServiceFacade streamingServiceFacade = streamingServiceFacadeFactory.getStreamingServiceFacade(service);
+                    Song song = streamingServiceFacade.getSongFromSongObject(requestedSong);
 
-                songURLsByDomainName.put(service.getDomainName(), song.getUri());
+                    songURLsByDomainName.put(service.getDomainName(), song.getUri());
+                } catch (Exception ignored) {
+                }
             }
         }
 

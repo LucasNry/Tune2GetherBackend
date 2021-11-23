@@ -52,6 +52,12 @@
             <version>1.10.18</version>
             <scope>test</scope>
         </dependency>
+
+        <dependency>
+            <groupId>se.michaelthelin.spotify</groupId>
+            <artifactId>spotify-web-api-java</artifactId>
+            <version>6.5.4</version>
+        </dependency>
     </dependencies>
 
 
