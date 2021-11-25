@@ -1,7 +1,10 @@
 package com.t2g.app.controller;
 
+import com.t2g.app.LinkNotFoundException;
+import com.t2g.app.dao.LinkTableDAO;
 import com.t2g.app.facade.StreamingServiceFacade;
 import com.t2g.app.facade.StreamingServiceFacadeFactory;
+import com.t2g.app.model.LinkTableEntry;
 import com.t2g.app.model.Song;
 import com.t2g.app.model.StreamingService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,6 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -21,16 +25,38 @@ public class GetMusicController {
     @Autowired
     private StreamingServiceFacadeFactory streamingServiceFacadeFactory;
 
-    @GetMapping("getMusic")
+    @Autowired
+    private LinkTableDAO linkTableDAO;
+
+    @GetMapping("/link")
+    public Map<String, String> getUniversalLink(@RequestParam("id") String id) throws Exception {
+        Optional<LinkTableEntry> linkTableEntry = Optional.ofNullable(linkTableDAO.getLinksById(id));
+
+        if (!linkTableEntry.isPresent()) {
+            throw new LinkNotFoundException();
+        }
+
+        return linkTableEntry
+                .get()
+                .getUrl();
+    }
+
+    @GetMapping("/music")
     public Map<String, String> getMusic(@RequestParam("l") String sanitizedUrl) throws Exception {
+        Map<String, String> songIdByServiceDomain = new HashMap<>();
         Map<String, String> songURLsByDomainName = new HashMap<>();
 
         StreamingService streamingService = StreamingService.getServiceFromDomainName(getDomainNameFromURL(sanitizedUrl));
-        Song requestedSong = getSongInformation(sanitizedUrl, streamingService);
+        StreamingServiceFacade originServiceFacade = streamingServiceFacadeFactory.getStreamingServiceFacade(streamingService);
 
-        songURLsByDomainName.put(streamingService.getDomainName(), requestedSong.toString()); // TODO: de-sanitize the url before adding it to the map
+        LinkTableEntry existingLink = linkTableDAO.getLinkByServiceId(originServiceFacade.getSongIdFromURL(sanitizedUrl), streamingService);
+        if (existingLink !=  null) {
+            return existingLink.getUrl();
+        }
 
-        //TODO: Save track id on fake DB
+        Song requestedSong = getSongInformation(originServiceFacade, sanitizedUrl);
+        songIdByServiceDomain.put(streamingService.getDomainName(), originServiceFacade.getSongIdFromURL(requestedSong.getUrl()));
+        songURLsByDomainName.put(streamingService.getDomainName(), requestedSong.getUrl()); // TODO: de-sanitize the url before adding it to the map
 
         for (StreamingService service : StreamingService.values()) {
             if (service != streamingService) {
@@ -38,11 +64,16 @@ public class GetMusicController {
                     StreamingServiceFacade streamingServiceFacade = streamingServiceFacadeFactory.getStreamingServiceFacade(service);
                     Song song = streamingServiceFacade.getSongFromSongObject(requestedSong);
 
-                    songURLsByDomainName.put(service.getDomainName(), song.getUri());
+                    String songUrl = song.getUrl();
+                    songIdByServiceDomain.put(service.getDomainName(), streamingServiceFacade.getSongIdFromURL(songUrl));
+                    songURLsByDomainName.put(service.getDomainName(), songUrl);
                 } catch (Exception ignored) {
                 }
             }
         }
+
+        LinkTableEntry linkTableEntry = new LinkTableEntry(songIdByServiceDomain, songURLsByDomainName);
+        linkTableDAO.addLink(linkTableEntry);
 
         return songURLsByDomainName;
     }
@@ -58,9 +89,7 @@ public class GetMusicController {
         return null;
     }
 
-    private Song getSongInformation(String sanitizedURL, StreamingService streamingService) throws Exception {
-        StreamingServiceFacade originServiceFacade = streamingServiceFacadeFactory.getStreamingServiceFacade(streamingService);
-
+    private Song getSongInformation(StreamingServiceFacade originServiceFacade, String sanitizedURL) throws Exception {
         String songId = originServiceFacade.getSongIdFromURL(sanitizedURL);
         return originServiceFacade.getSongFromId(songId);
     }
