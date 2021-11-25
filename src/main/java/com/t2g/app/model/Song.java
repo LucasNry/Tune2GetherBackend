@@ -9,7 +9,6 @@ import lombok.Builder;
 import lombok.Data;
 
 import java.lang.reflect.Field;
-import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -37,7 +36,7 @@ public class Song {
 
     private List<TrackCover> images;
 
-    private String uri;
+    private String url;
 
     public Song(Track track) { // TODO: Create one constructor per Streaming Service
         this.title = track.getName();
@@ -61,7 +60,9 @@ public class Song {
             );
         }
 
-        this.uri = track.getUri();
+        this.url = track
+                .getExternalUrls()
+                .get(StreamingService.SPOTIFY.getDomainName());
     }
 
     public String getQueryString() throws Exception {
