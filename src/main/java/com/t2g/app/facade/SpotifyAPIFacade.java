@@ -1,5 +1,6 @@
 package com.t2g.app.facade;
 
+import com.t2g.app.manager.CredentialManager;
 import com.t2g.app.model.Song;
 import com.wrapper.spotify.SpotifyApi;
 import com.wrapper.spotify.exceptions.SpotifyWebApiException;
@@ -22,6 +23,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 @Component
@@ -31,15 +33,12 @@ public class SpotifyAPIFacade extends StreamingServiceFacade {
     @Autowired
     private SpotifyApi spotifyApi;
 
+    @Autowired
+    private CredentialManager credentialManager;
+
     @PostConstruct
     public void postConstruct() throws Exception {
-        ClientCredentialsRequest clientCredentialsRequest = spotifyApi
-                .clientCredentials()
-                .build();
-
-        ClientCredentials clientCredentials = clientCredentialsRequest.execute();
-        spotifyApi.setAccessToken(clientCredentials.getAccessToken());
-        //TODO: Add to credentialManager along with the time to expire of the token to manage the accessToken
+        refreshCredentials();
     }
 
     @Override
@@ -86,5 +85,22 @@ public class SpotifyAPIFacade extends StreamingServiceFacade {
         URL url = new URL(serviceURL);
         String[] splitURL = url.getPath().split(SONG_ID_SEPARATOR);
         return splitURL[splitURL.length - 1];
+    }
+
+    @Override
+    public void refreshCredentials() throws Exception {
+        // This method will need to be refactored once we start making requests for users
+        ClientCredentialsRequest clientCredentialsRequest = spotifyApi
+                .clientCredentials()
+                .build();
+
+        ClientCredentials clientCredentials = clientCredentialsRequest.execute();
+        spotifyApi.setAccessToken(clientCredentials.getAccessToken());
+
+        int timeToExpireInSeconds = clientCredentials.getExpiresIn();
+        credentialManager.addToQueue(
+                this,
+                TimeUnit.MILLISECONDS.convert(timeToExpireInSeconds, TimeUnit.SECONDS)
+        );
     }
 }
