@@ -11,6 +11,9 @@ public class StreamingServiceFacadeFactory {
     @Autowired
     private SpotifyAPIFacade spotifyAPIFacade;
 
+    @Autowired
+    private DeezerAPIFacade deezerAPIFacade;
+
     public StreamingServiceFacade getStreamingServiceFacade(StreamingService streamingService) {
         return getStreamingServiceFacade(streamingService.getDomainName());
     }
@@ -22,6 +25,7 @@ public class StreamingServiceFacadeFactory {
             case SPOTIFY:
                 return spotifyAPIFacade;
             case DEEZER:
+                return deezerAPIFacade;
             case YOUTUBE:
             default:
                 throw new IllegalArgumentException(String.format(FACADE_NOT_FOUND_FOR_SERVICE_ERROR_MESSAGE, streamingService.name()));
