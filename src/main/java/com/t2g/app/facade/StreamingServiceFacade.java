@@ -16,4 +16,6 @@ public abstract class StreamingServiceFacade {
     public abstract Song getSongFromSongObject(Song object) throws Exception;
 
     public abstract String getSongIdFromURL(String serviceURL) throws Exception;
+
+    public abstract void refreshCredentials() throws Exception;
 }
