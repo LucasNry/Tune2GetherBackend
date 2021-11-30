@@ -5,6 +5,8 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.t2g.app.model.Song;
+import com.t2g.app.model.YTSong;
+import org.springframework.stereotype.Component;
 
 import java.net.URI;
 import java.net.http.HttpClient;
@@ -13,7 +15,8 @@ import java.net.http.HttpResponse;
 import java.util.ArrayList;
 import java.util.List;
 
-public class YTMusicAPIFacade extends StreamingServiceFacade{
+@Component
+public class YTAPIFacade extends StreamingServiceFacade{
     private static final String KEY = "&key=AIzaSyBXbztZDjnuO4h1VLo76WS0ca-jNeL49s4";
 
     private static final HttpClient CLIENT = HttpClient.newHttpClient();
@@ -21,7 +24,7 @@ public class YTMusicAPIFacade extends StreamingServiceFacade{
     private static final String APIBASEURL = "https://youtube.googleapis.com/youtube/v3/";
 
     @Override
-    public Song getSongFromId(String id) throws Exception {
+    public YTSong getSongFromId(String id) throws Exception {
         String url = "videos?part=snippet&id=";
 
         JsonObject jsonResponse = getJsonResponse(id, url);
@@ -31,13 +34,13 @@ public class YTMusicAPIFacade extends StreamingServiceFacade{
                 .get(0)
                 .getAsJsonObject();
 
-        return new Song(trackInfo);
+        return new YTSong(trackInfo);
     }
 
     @Override
-    public List<Song> getSongFromTitle(String title) throws Exception {
-        List<Song> songArrayList = new ArrayList<>();
-        String url = "search?part=snippet&maxResults=1&type=video&videoCategoryId=10&q=";
+    public List<YTSong> getSongFromTitle(String title) throws Exception {
+        List<YTSong> songArrayList = new ArrayList<>();
+        String url = "search?part=snippet&maxResults=5&type=video&videoCategoryId=10&q=";
 
         JsonObject jsonResponse = getJsonResponse(title, url);
 
@@ -45,14 +48,14 @@ public class YTMusicAPIFacade extends StreamingServiceFacade{
 
         for (JsonElement song: songs) {
             JsonObject trackInfo = song.getAsJsonObject();
-            songArrayList.add(new Song(trackInfo));
+            songArrayList.add(new YTSong(trackInfo));
         }
 
         return songArrayList;
     }
 
     @Override
-    public Song getSongFromSongObject(Song object) throws Exception {
+    public YTSong getSongFromSongObject(Song object) throws Exception {
         String title = object.getTitle();
 
         return getSongFromTitle(title).get(0);
