@@ -3,6 +3,8 @@ package com.t2g.app.util;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
+import org.springframework.stereotype.Component;
 
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -14,6 +16,10 @@ public class JSONUtils {
     private static final String FILENAME_TEMPLATE = "resources/%s%s"; // Related to jar
 
     private static JSONParser jsonParser = new JSONParser();
+
+    public static JSONObject parseJSON(String jsonString) throws ParseException {
+        return (JSONObject) jsonParser.parse(jsonString);
+    }
 
     public static JSONObject readJSONFile(String fileName) throws Exception {
         try (InputStreamReader reader = new InputStreamReader(
