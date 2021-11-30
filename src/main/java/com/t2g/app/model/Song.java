@@ -31,54 +31,6 @@ public abstract class Song {
 
     public abstract String serializeCollection(String key, Collection<?> value);
 
-    public Song(JsonObject trackInfo){
-        JsonObject songSnippet = trackInfo.getAsJsonObject("snippet");
-        JsonObject songId = trackInfo.getAsJsonObject("id");
-
-        String title = songSnippet
-                .getAsJsonPrimitive("title")
-                .getAsString();
-        this.title = title;
-
-        String artist = songSnippet
-                .getAsJsonPrimitive("channelTitle")
-                .getAsString();
-        this.artists.add(artist);
-
-        JsonObject imagesObject = songSnippet
-                .getAsJsonObject("thumbnails")
-                .getAsJsonObject("high");
-
-        String imgUrl = imagesObject
-                .getAsJsonPrimitive("url")
-                .getAsString();
-
-        int imgHeight = imagesObject
-                .getAsJsonPrimitive("height")
-                .getAsInt();
-
-        int imgWidth = imagesObject
-                .getAsJsonPrimitive("width")
-                .getAsInt();
-
-        this.images.add(
-                TrackCover
-                        .builder()
-                        .url(imgUrl)
-                        .height(imgHeight)
-                        .width(imgWidth)
-                        .build()
-        );
-
-        String videoId = songId
-                .getAsJsonPrimitive("videoId")
-                .getAsString();
-
-        String defaultYTDomain = "https://www.youtube.com/watch?v=";
-
-        this.url = defaultYTDomain + videoId;
-    }
-
     public String getQueryString() throws Exception {
         StringBuilder sb = new StringBuilder();
 
