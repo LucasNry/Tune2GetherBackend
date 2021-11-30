@@ -2,69 +2,34 @@ package com.t2g.app.model;
 
 import com.google.gson.JsonObject;
 import com.t2g.app.annotations.QueryName;
-import com.wrapper.spotify.model_objects.specification.ArtistSimplified;
-import com.wrapper.spotify.model_objects.specification.Image;
-import com.wrapper.spotify.model_objects.specification.Track;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
 
 import java.lang.reflect.Field;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
-import java.util.stream.Collectors;
 
-@Data
-@Builder
 @AllArgsConstructor
-public class Song {
-    private static final String QUERY_PARAMETER_SEPARATOR = " ";
-    private static final String QUERY_PARAMETER_KEY_VALUE_SEPARATOR = ":";
+@Data
+public abstract class Song {
 
     @QueryName("track")
-    @Builder.Default
-    private String title = null;
+    private String title;
 
     @QueryName("artist")
-    @Builder.Default
-    private List<String> artists = null;
+    private List<String> artists;
 
-    @QueryName("album")
-    @Builder.Default
-    private String album = null;
+    private String album;
 
     private List<TrackCover> images;
 
     private String url;
 
-    public Song(Track track) { // TODO: Create one constructor per Streaming Service
-        this.title = track.getName();
-        this.artists = Arrays
-                .stream(track.getArtists())
-                .map(ArtistSimplified::getName)
-                .collect(Collectors.toList());
-        this.album = track
-                .getAlbum()
-                .getName();
+    private String queryParameterSeparator;
 
-        this.images = new ArrayList<>();
-        for (Image image : track.getAlbum().getImages()) {
-            images.add(
-                    TrackCover
-                            .builder()
-                            .url(image.getUrl())
-                            .height(image.getHeight())
-                            .width(image.getWidth())
-                            .build()
-            );
-        }
+    public abstract String serializeField(String key, Object value);
 
-        this.url = track
-                .getExternalUrls()
-                .get(StreamingService.SPOTIFY.getDomainName());
-    }
+    public abstract String serializeCollection(String key, Collection<?> value);
 
     public Song(JsonObject trackInfo){
         JsonObject songSnippet = trackInfo.getAsJsonObject("snippet");
@@ -124,20 +89,13 @@ public class Song {
 
                 if (value != null) {
                     if (sb.length() > 0) {
-                        sb.append(QUERY_PARAMETER_SEPARATOR);
+                        sb.append(queryParameterSeparator);
                     }
 
                     if (value instanceof Collection<?>) {
-                        Object obj = ((List<Object>) value).get(0);
-                        sb
-                                .append(key)
-                                .append(QUERY_PARAMETER_KEY_VALUE_SEPARATOR)
-                                .append(obj);
+                        sb.append(serializeCollection(key, (Collection<?>) value));
                     } else {
-                        sb
-                                .append(key)
-                                .append(QUERY_PARAMETER_KEY_VALUE_SEPARATOR)
-                                .append(value);
+                        sb.append(serializeField(key, value));
                     }
                 }
             }

@@ -13,6 +13,10 @@ public class StreamingServiceFacadeFactory {
 
     private YTMusicAPIFacade ytMusicAPIFacade;
 
+    @Autowired
+    private DeezerAPIFacade deezerAPIFacade;
+
+
     public StreamingServiceFacade getStreamingServiceFacade(StreamingService streamingService) {
         return getStreamingServiceFacade(streamingService.getDomainName());
     }
@@ -24,6 +28,7 @@ public class StreamingServiceFacadeFactory {
             case SPOTIFY:
                 return spotifyAPIFacade;
             case DEEZER:
+                return deezerAPIFacade;
             case YOUTUBE:
                 return ytMusicAPIFacade;
             default:
