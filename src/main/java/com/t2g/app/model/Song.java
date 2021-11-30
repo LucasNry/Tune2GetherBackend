@@ -1,6 +1,5 @@
 package com.t2g.app.model;
 
-import com.google.gson.JsonObject;
 import com.t2g.app.annotations.QueryName;
 import lombok.AllArgsConstructor;
 import lombok.Data;
