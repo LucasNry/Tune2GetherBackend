@@ -17,7 +17,6 @@ public class StreamingServiceFacadeFactory {
     @Autowired
     private DeezerAPIFacade deezerAPIFacade;
 
-
     public StreamingServiceFacade getStreamingServiceFacade(StreamingService streamingService) {
         return getStreamingServiceFacade(streamingService.getDomainName());
     }
