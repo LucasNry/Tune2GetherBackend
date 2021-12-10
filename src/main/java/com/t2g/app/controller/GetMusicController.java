@@ -8,6 +8,7 @@ import com.t2g.app.model.LinkTableEntry;
 import com.t2g.app.model.Song;
 import com.t2g.app.model.StreamingService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -28,6 +29,7 @@ public class GetMusicController {
     @Autowired
     private LinkTableDAO linkTableDAO;
 
+    @CrossOrigin(origins = "*")
     @GetMapping("/link")
     public Map<String, String> getUniversalLink(@RequestParam("id") String id) throws Exception {
         Optional<LinkTableEntry> linkTableEntry = Optional.ofNullable(linkTableDAO.getLinksById(id));
@@ -41,6 +43,7 @@ public class GetMusicController {
                 .getUrl();
     }
 
+    @CrossOrigin(origins = "*")
     @GetMapping("/music")
     public Map<String, String> getMusic(@RequestParam("l") String sanitizedUrl) throws Exception {
         Map<String, String> songIdByServiceDomain = new HashMap<>();
@@ -51,8 +54,14 @@ public class GetMusicController {
 
         String originSongId = originServiceFacade.getSongIdFromURL(sanitizedUrl);
         LinkTableEntry existingLink = linkTableDAO.getLinkByServiceId(originSongId, streamingService);
-        if (existingLink !=  null) {
-            return existingLink.getUrl();
+        if (
+                existingLink !=  null &&
+                existingLink.getUrl().size() == StreamingService.values().length
+        ) {
+            Map<String, String> response = new HashMap<>();
+            response.put(LinkTableEntry.UNIVERSAL_ID, existingLink.getUniversalId());
+
+            return response;
         }
 
         Song requestedSong = getSongInformation(originServiceFacade, sanitizedUrl);
@@ -68,7 +77,8 @@ public class GetMusicController {
                     String songUrl = song.getUrl();
                     songIdByServiceDomain.put(service.getDomainName(), streamingServiceFacade.getSongIdFromURL(songUrl));
                     songURLsByDomainName.put(service.getDomainName(), songUrl);
-                } catch (Exception ignored) {
+                } catch (Exception e) {
+                    e.printStackTrace();
                 }
             }
         }
@@ -76,7 +86,10 @@ public class GetMusicController {
         LinkTableEntry linkTableEntry = new LinkTableEntry(songIdByServiceDomain, songURLsByDomainName);
         linkTableDAO.addLink(linkTableEntry);
 
-        return songURLsByDomainName;
+        Map<String, String> response = new HashMap<>();
+        response.put(LinkTableEntry.UNIVERSAL_ID, linkTableEntry.getUniversalId());
+
+        return response;
     }
 
     private String getDomainNameFromURL(String sanitizedURL) {

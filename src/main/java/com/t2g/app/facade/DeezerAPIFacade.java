@@ -7,6 +7,7 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.springframework.stereotype.Component;
 
+import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
@@ -27,8 +28,6 @@ public class DeezerAPIFacade extends StreamingServiceFacade<DeezerSong> {
     private static final String TRACK_ENDPOINT_TEMPLATE = "/track/%s";
     private static final String SEARCH_ENDPOINT_TEMPLATE = "/search/?q=%s";
 
-    private HttpClient httpClient = HttpClient.newHttpClient();
-
     @Override
     public DeezerSong getSongFromId(String id) throws Exception {
         HttpRequest getRequest = HttpRequest
@@ -37,7 +36,7 @@ public class DeezerAPIFacade extends StreamingServiceFacade<DeezerSong> {
                 .uri(URI.create(BASE_API_ADDRESS + String.format(TRACK_ENDPOINT_TEMPLATE, id)))
                 .build();
 
-        HttpResponse<String> response = httpClient.send(getRequest, BodyHandlers.ofString());
+        HttpResponse<String> response = sendRequest(getRequest);
         JSONObject jsonObject = JSONUtils.parseJSON(response.body());
 
         return new DeezerSong(jsonObject);
@@ -55,7 +54,7 @@ public class DeezerAPIFacade extends StreamingServiceFacade<DeezerSong> {
                 .uri(URI.create(BASE_API_ADDRESS + String.format(SEARCH_ENDPOINT_TEMPLATE, deezerSong.getQueryString())))
                 .build();
 
-        HttpResponse<String> response = httpClient.send(getRequest, BodyHandlers.ofString());
+        HttpResponse<String> response = sendRequest(getRequest);
         JSONObject jsonObject = JSONUtils.parseJSON(response.body());
 
         return (List<DeezerSong>) ((JSONArray) jsonObject.get("data"))
@@ -78,7 +77,7 @@ public class DeezerAPIFacade extends StreamingServiceFacade<DeezerSong> {
                 .uri(URI.create(BASE_API_ADDRESS + String.format(SEARCH_ENDPOINT_TEMPLATE, deezerSong.getQueryString())))
                 .build();
 
-        HttpResponse<String> response = httpClient.send(getRequest, BodyHandlers.ofString());
+        HttpResponse<String> response = sendRequest(getRequest);
 
         JSONObject jsonResponse = JSONUtils.parseJSON(response.body());
         JSONArray jsonArray = (JSONArray) jsonResponse.get("data");
@@ -98,5 +97,10 @@ public class DeezerAPIFacade extends StreamingServiceFacade<DeezerSong> {
     @Override
     public void refreshCredentials() throws Exception {
 
+    }
+
+    private HttpResponse<String> sendRequest(HttpRequest httpRequest) throws IOException, InterruptedException {
+        HttpClient httpClient = HttpClient.newHttpClient();
+        return httpClient.send(httpRequest, BodyHandlers.ofString());
     }
 }
