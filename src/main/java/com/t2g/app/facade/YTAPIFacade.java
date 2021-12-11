@@ -8,6 +8,7 @@ import com.t2g.app.model.Song;
 import com.t2g.app.model.YTSong;
 import org.springframework.stereotype.Component;
 
+import java.net.HttpRetryException;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -17,17 +18,15 @@ import java.util.List;
 
 @Component
 public class YTAPIFacade extends StreamingServiceFacade<YTSong>{
-    private static final String KEY = "&key=AIzaSyBXbztZDjnuO4h1VLo76WS0ca-jNeL49s4";
-
-    private static final HttpClient CLIENT = HttpClient.newHttpClient();
-
+    private static final String API_KEY = "&key=AIzaSyBXbztZDjnuO4h1VLo76WS0ca-jNeL49s4";
     private static final String API_BASE_URL = "https://youtube.googleapis.com/youtube/v3/";
+    private static final String SEARCH_ENDPOINT_TEMPLATE = "search?part=snippet&maxResults=5&type=video&videoCategoryId=10&q=%s";
+    private static final String VIDEO_BY_ID_ENDPOINT_TEMPLATE = "videos?part=snippet&id=%s";
 
     @Override
     public YTSong getSongFromId(String id) throws Exception {
-        final String url = "videos?part=snippet&id=";
-
-        JsonObject jsonResponse = getJsonResponse(id, url);
+        String endpoint = String.format(VIDEO_BY_ID_ENDPOINT_TEMPLATE, id);
+        JsonObject jsonResponse = getJsonResponse(endpoint);
 
         JsonObject trackInfo = jsonResponse
                 .getAsJsonArray("items")
@@ -40,12 +39,15 @@ public class YTAPIFacade extends StreamingServiceFacade<YTSong>{
     @Override
     public List<YTSong> getSongFromTitle(String title) throws Exception {
         List<YTSong> songArrayList = new ArrayList<>();
-        final String url = "search?part=snippet&maxResults=5&type=video&videoCategoryId=10&q=";
+        YTSong ytSong = YTSong
+                .builder()
+                .title(title)
+                .build();
 
-        JsonObject jsonResponse = getJsonResponse(title, url);
+        String endpoint = String.format(SEARCH_ENDPOINT_TEMPLATE, ytSong.getQueryString());
+        JsonObject jsonResponse = getJsonResponse(endpoint);
 
         JsonArray songs = jsonResponse.getAsJsonArray("items");
-
         for (JsonElement song: songs) {
             JsonObject trackInfo = song.getAsJsonObject();
             songArrayList.add(new YTSong(trackInfo));
@@ -56,12 +58,20 @@ public class YTAPIFacade extends StreamingServiceFacade<YTSong>{
 
     @Override
     public YTSong getSongFromSongObject(Song object) throws Exception {
-        String title = object.getTitle();
-        String artist = object.getArtists().get(0);
+        YTSong ytSong = YTSong
+                .builder()
+                .title(object.getTitle())
+                .artists(object.getArtists())
+                .build();
 
-        String song = title + '+' + artist;
+        String endpoint = String.format(SEARCH_ENDPOINT_TEMPLATE, ytSong.getQueryString());
+        JsonObject jsonResponse = getJsonResponse(endpoint);
 
-        return getSongFromTitle(song).get(0);
+        JsonObject trackInfo = jsonResponse
+                .getAsJsonArray("items")
+                .get(0)
+                .getAsJsonObject();
+        return new YTSong(trackInfo);
     }
 
     @Override
@@ -74,8 +84,8 @@ public class YTAPIFacade extends StreamingServiceFacade<YTSong>{
 
     }
 
-    private JsonObject getJsonResponse(String id, String url) throws java.io.IOException, InterruptedException {
-        String urlRequest = API_BASE_URL + url + id + KEY;
+    private JsonObject getJsonResponse(String endpoint) throws java.io.IOException, InterruptedException {
+        String urlRequest = API_BASE_URL + endpoint + API_KEY;
 
         HttpRequest request = HttpRequest.newBuilder()
                 .GET()
@@ -83,7 +93,8 @@ public class YTAPIFacade extends StreamingServiceFacade<YTSong>{
                 .header("Accept", "application/json")
                 .build();
 
-        var response = CLIENT.send(request, HttpResponse.BodyHandlers.ofString());
+        HttpClient httpClient = HttpClient.newHttpClient();
+        HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
 
         return JsonParser
                 .parseString(response.body())
