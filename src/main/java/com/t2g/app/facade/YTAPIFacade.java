@@ -16,16 +16,16 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Component
-public class YTAPIFacade extends StreamingServiceFacade{
+public class YTAPIFacade extends StreamingServiceFacade<YTSong>{
     private static final String KEY = "&key=AIzaSyBXbztZDjnuO4h1VLo76WS0ca-jNeL49s4";
 
     private static final HttpClient CLIENT = HttpClient.newHttpClient();
 
-    private static final String APIBASEURL = "https://youtube.googleapis.com/youtube/v3/";
+    private static final String API_BASE_URL = "https://youtube.googleapis.com/youtube/v3/";
 
     @Override
     public YTSong getSongFromId(String id) throws Exception {
-        String url = "videos?part=snippet&id=";
+        final String url = "videos?part=snippet&id=";
 
         JsonObject jsonResponse = getJsonResponse(id, url);
 
@@ -40,7 +40,7 @@ public class YTAPIFacade extends StreamingServiceFacade{
     @Override
     public List<YTSong> getSongFromTitle(String title) throws Exception {
         List<YTSong> songArrayList = new ArrayList<>();
-        String url = "search?part=snippet&maxResults=5&type=video&videoCategoryId=10&q=";
+        final String url = "search?part=snippet&maxResults=5&type=video&videoCategoryId=10&q=";
 
         JsonObject jsonResponse = getJsonResponse(title, url);
 
@@ -57,8 +57,11 @@ public class YTAPIFacade extends StreamingServiceFacade{
     @Override
     public YTSong getSongFromSongObject(Song object) throws Exception {
         String title = object.getTitle();
+        String artist = object.getArtists().get(0);
 
-        return getSongFromTitle(title).get(0);
+        String song = title + '+' + artist;
+
+        return getSongFromTitle(song).get(0);
     }
 
     @Override
@@ -72,7 +75,7 @@ public class YTAPIFacade extends StreamingServiceFacade{
     }
 
     private JsonObject getJsonResponse(String id, String url) throws java.io.IOException, InterruptedException {
-        String urlRequest = APIBASEURL + url + id + KEY;
+        String urlRequest = API_BASE_URL + url + id + KEY;
 
         HttpRequest request = HttpRequest.newBuilder()
                 .GET()
