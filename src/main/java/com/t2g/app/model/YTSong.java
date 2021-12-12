@@ -10,10 +10,8 @@ import java.util.List;
 
 @EqualsAndHashCode(callSuper = true)
 public class YTSong extends Song{
-    private static final String QUERY_PARAMETER_SEPARATOR = " ";
-    private static final String ENCODED_QUERY_PARAMETER_SEPARATOR = "%20";
-    private static final String QUERY_PARAMETER_KEY_VALUE_SEPARATOR = ":";
-    private static final String QUERY_PARAMETER_VALUE_TEMPLATE = "'%s'";
+    private static final String QUERY_PARAMETER_SEPARATOR = "+";
+    private static final String ENCODED_SPACE_CHAR = "%20";
 
     @Builder
     public YTSong(String title, List<String> artists, String album, List<TrackCover> images, String uri) {
@@ -59,9 +57,7 @@ public class YTSong extends Song{
 
     @Override
     public String serializeField(String key, Object value) {
-        return key +
-                QUERY_PARAMETER_KEY_VALUE_SEPARATOR +
-                String.format(QUERY_PARAMETER_VALUE_TEMPLATE, value);
+        return (String) value;
     }
 
     @Override
@@ -72,6 +68,6 @@ public class YTSong extends Song{
 
     @Override
     public String getQueryString() throws Exception {
-        return super.getQueryString().replaceAll(QUERY_PARAMETER_SEPARATOR, ENCODED_QUERY_PARAMETER_SEPARATOR);
+        return super.getQueryString().replaceAll(" ", ENCODED_SPACE_CHAR);
     }
 }
