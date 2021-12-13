@@ -12,6 +12,7 @@ import java.util.List;
 public class YTSong extends Song{
     private static final String QUERY_PARAMETER_SEPARATOR = "+";
     private static final String ENCODED_SPACE_CHAR = "%20";
+    private static final String YT_INTERNAL_CLASSIFICATION = "- Topic";
 
     @Builder
     public YTSong(String title, List<String> artists, String album, List<TrackCover> images, String uri) {
@@ -26,7 +27,9 @@ public class YTSong extends Song{
                 Collections.singletonList(
                         trackInfo.getAsJsonObject("snippet")
                                 .getAsJsonPrimitive("channelTitle")
-                                .getAsString()),
+                                .getAsString()
+                                .replace(YT_INTERNAL_CLASSIFICATION, "")
+                ),
                 "",
                 Collections.singletonList(
                         TrackCover
@@ -48,8 +51,7 @@ public class YTSong extends Song{
                                         .getAsInt())
                                 .build()
                 ),
-                "https://www.youtube.com/watch?v=" + trackInfo.getAsJsonObject("id")
-                        .getAsJsonPrimitive("videoId")
+                "https://www.youtube.com/watch?v=" + trackInfo.getAsJsonPrimitive("id")
                         .getAsString(),
                 QUERY_PARAMETER_SEPARATOR
         );
