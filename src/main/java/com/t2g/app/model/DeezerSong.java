@@ -4,6 +4,8 @@ import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import org.json.simple.JSONObject;
 
+import java.net.URLEncoder;
+import java.nio.charset.Charset;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -17,11 +19,12 @@ public class DeezerSong extends Song {
 
     @Builder
     public DeezerSong(String title, List<String> artists, String album, List<TrackCover> images, String uri) {
-        super(title, artists, album, images, uri, QUERY_PARAMETER_SEPARATOR);
+        super(null, title, artists, album, images, uri, QUERY_PARAMETER_SEPARATOR);
     }
 
     public DeezerSong(JSONObject jsonObject) {
         super(
+                Long.toString((Long) jsonObject.get("id")),
                 (String) jsonObject.get("title"),
                 Collections.singletonList(
                         (String) ((JSONObject) jsonObject.get("artist"))
@@ -57,6 +60,6 @@ public class DeezerSong extends Song {
 
     @Override
     public String getQueryString() throws Exception {
-        return super.getQueryString().replaceAll(QUERY_PARAMETER_SEPARATOR, ENCODED_QUERY_PARAMETER_SEPARATOR);
+        return URLEncoder.encode(super.getQueryString(), Charset.defaultCharset());
     }
 }

@@ -1,5 +1,6 @@
 package com.t2g.app.facade;
 
+import com.t2g.app.exception.StreamingServiceNotSupported;
 import com.t2g.app.model.StreamingService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -17,11 +18,11 @@ public class StreamingServiceFacadeFactory {
     @Autowired
     private DeezerAPIFacade deezerAPIFacade;
 
-    public StreamingServiceFacade getStreamingServiceFacade(StreamingService streamingService) {
+    public StreamingServiceFacade getStreamingServiceFacade(StreamingService streamingService) throws StreamingServiceNotSupported {
         return getStreamingServiceFacade(streamingService.getDomainName());
     }
 
-    public StreamingServiceFacade getStreamingServiceFacade(String domainName) {
+    public StreamingServiceFacade getStreamingServiceFacade(String domainName) throws StreamingServiceNotSupported {
         StreamingService streamingService = StreamingService.getServiceFromDomainName(domainName);
 
         switch (streamingService) {

@@ -12,6 +12,8 @@ import java.util.List;
 @Data
 public abstract class Song {
 
+    private String serviceId;
+
     @QueryName("track")
     private String title;
 

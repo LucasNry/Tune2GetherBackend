@@ -17,8 +17,12 @@ public class JSONUtils {
 
     private static JSONParser jsonParser = new JSONParser();
 
-    public static JSONObject parseJSON(String jsonString) throws ParseException {
-        return (JSONObject) jsonParser.parse(jsonString);
+    public synchronized static JSONObject parseJSON(String jsonString) throws ParseException {
+        try {
+            return (JSONObject) jsonParser.parse(jsonString);
+        } catch (Exception e) {
+            throw e;
+        }
     }
 
     public static JSONObject readJSONFile(String fileName) throws Exception {

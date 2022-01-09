@@ -10,7 +10,7 @@ import java.net.URI;
 public class SpotifyApiConfiguration {
     private static final String CLIENT_ID = "1054b24476064d07be6671c399b8d816";
     private static final String CLIENT_SECRET = "5a24db2e6615413ea39980cc155baaf1";
-    private static final String REDIRECT_URI = "http://localhost:8080/getToken"; // TODO: create redirect endpoint
+    private static final String REDIRECT_URI = "http://localhost:8080/redirect";
 
     @Bean
     public SpotifyApi spotifyApi() {

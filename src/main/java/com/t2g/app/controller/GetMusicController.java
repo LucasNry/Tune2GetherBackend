@@ -1,6 +1,6 @@
 package com.t2g.app.controller;
 
-import com.t2g.app.LinkNotFoundException;
+import com.t2g.app.exception.LinkNotFoundException;
 import com.t2g.app.dao.LinkTableDAO;
 import com.t2g.app.facade.StreamingServiceFacade;
 import com.t2g.app.facade.StreamingServiceFacadeFactory;
@@ -16,13 +16,9 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 @RestController
 public class GetMusicController {
-    private static final String BETWEEN_DOTS_REGEX = "(?=\\.).+(?<=\\.)";
-
     @Autowired
     private StreamingServiceFacadeFactory streamingServiceFacadeFactory;
 
@@ -32,7 +28,7 @@ public class GetMusicController {
     @CrossOrigin(origins = "*")
     @GetMapping("/link")
     public Map<String, String> getUniversalLink(@RequestParam("id") String id) throws Exception {
-        Optional<LinkTableEntry> linkTableEntry = Optional.ofNullable(linkTableDAO.getLinksById(id));
+        Optional<LinkTableEntry> linkTableEntry = Optional.ofNullable(linkTableDAO.getByPrimaryKey(id));
 
         if (!linkTableEntry.isPresent()) {
             throw new LinkNotFoundException();
@@ -49,24 +45,24 @@ public class GetMusicController {
         Map<String, String> songIdByServiceDomain = new HashMap<>();
         Map<String, String> songURLsByDomainName = new HashMap<>();
 
-        StreamingService streamingService = StreamingService.getServiceFromDomainName(getDomainNameFromURL(sanitizedUrl));
+        StreamingService streamingService = StreamingService.getServiceFromUrl(sanitizedUrl);
         StreamingServiceFacade originServiceFacade = streamingServiceFacadeFactory.getStreamingServiceFacade(streamingService);
 
-        String originSongId = originServiceFacade.getSongIdFromURL(sanitizedUrl);
+        String originSongId = originServiceFacade.getAssetIdFromURL(sanitizedUrl);
         LinkTableEntry existingLink = linkTableDAO.getLinkByServiceId(originSongId, streamingService);
         if (
                 existingLink !=  null &&
                 existingLink.getUrl().size() == StreamingService.values().length
         ) {
             Map<String, String> response = new HashMap<>();
-            response.put(LinkTableEntry.UNIVERSAL_ID, existingLink.getUniversalId());
+            response.put("id", existingLink.getPrimaryKey());
 
             return response;
         }
 
         Song requestedSong = getSongInformation(originServiceFacade, sanitizedUrl);
         songIdByServiceDomain.put(streamingService.getDomainName(), originSongId);
-        songURLsByDomainName.put(streamingService.getDomainName(), requestedSong.getUrl()); // TODO: de-sanitize the url before adding it to the map
+        songURLsByDomainName.put(streamingService.getDomainName(), requestedSong.getUrl());
 
         for (StreamingService service : StreamingService.values()) {
             if (service != streamingService) {
@@ -75,7 +71,7 @@ public class GetMusicController {
                     Song song = streamingServiceFacade.getSongFromSongObject(requestedSong);
 
                     String songUrl = song.getUrl();
-                    songIdByServiceDomain.put(service.getDomainName(), streamingServiceFacade.getSongIdFromURL(songUrl));
+                    songIdByServiceDomain.put(service.getDomainName(), streamingServiceFacade.getAssetIdFromURL(songUrl));
                     songURLsByDomainName.put(service.getDomainName(), songUrl);
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -84,27 +80,16 @@ public class GetMusicController {
         }
 
         LinkTableEntry linkTableEntry = new LinkTableEntry(songIdByServiceDomain, songURLsByDomainName);
-        linkTableDAO.addLink(linkTableEntry);
+        linkTableDAO.addEntry(linkTableEntry);
 
         Map<String, String> response = new HashMap<>();
-        response.put(LinkTableEntry.UNIVERSAL_ID, linkTableEntry.getUniversalId());
+        response.put("id", linkTableEntry.getPrimaryKey());
 
         return response;
     }
 
-    private String getDomainNameFromURL(String sanitizedURL) {
-        Pattern pattern = Pattern.compile(BETWEEN_DOTS_REGEX, Pattern.MULTILINE);
-        Matcher matcher = pattern.matcher(sanitizedURL);
-        if (matcher.find()) {
-            String unformattedServiceName = matcher.group(0);
-            return unformattedServiceName.replaceAll("\\.", "");
-        }
-
-        return null;
-    }
-
     private Song getSongInformation(StreamingServiceFacade originServiceFacade, String sanitizedURL) throws Exception {
-        String songId = originServiceFacade.getSongIdFromURL(sanitizedURL);
+        String songId = originServiceFacade.getAssetIdFromURL(sanitizedURL);
         return originServiceFacade.getSongFromId(songId);
     }
 }

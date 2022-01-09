@@ -4,11 +4,13 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.t2g.app.model.Playlist;
 import com.t2g.app.model.Song;
+import com.t2g.app.model.StreamingService;
+import com.t2g.app.model.UserCredentialsTableEntry;
 import com.t2g.app.model.YTSong;
 import org.springframework.stereotype.Component;
 
-import java.net.HttpRetryException;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -22,6 +24,10 @@ public class YTAPIFacade extends StreamingServiceFacade<YTSong>{
     private static final String API_BASE_URL = "https://youtube.googleapis.com/youtube/v3/";
     private static final String SEARCH_ENDPOINT_TEMPLATE = "search?part=snippet&maxResults=5&type=video&videoCategoryId=10&q=%s";
     private static final String VIDEO_BY_ID_ENDPOINT_TEMPLATE = "videos?part=snippet&id=%s";
+
+    public YTAPIFacade() {
+        super(100);
+    }
 
     @Override
     public YTSong getSongFromId(String id) throws Exception {
@@ -57,11 +63,11 @@ public class YTAPIFacade extends StreamingServiceFacade<YTSong>{
     }
 
     @Override
-    public YTSong getSongFromSongObject(Song object) throws Exception {
+    public YTSong getSongFromSongObject(Song songObject) throws Exception {
         YTSong ytSong = YTSong
                 .builder()
-                .title(object.getTitle())
-                .artists(object.getArtists())
+                .title(songObject.getTitle().split("-")[0])
+                .artists(songObject.getArtists())
                 .build();
 
         String endpoint = String.format(SEARCH_ENDPOINT_TEMPLATE, ytSong.getQueryString());
@@ -75,13 +81,37 @@ public class YTAPIFacade extends StreamingServiceFacade<YTSong>{
     }
 
     @Override
-    public String getSongIdFromURL(String serviceURL) throws Exception {
+    public String getAssetIdFromURL(String serviceURL) throws Exception {
         return serviceURL.split("v=")[1];
     }
 
     @Override
-    public void refreshCredentials() throws Exception {
+    public Playlist getPlaylist(String playlistUrl) {
+        return null;
+    }
 
+    @Override
+    public void createPlaylist(String userId, Playlist playlist) {
+
+    }
+
+    @Override
+    public String getAuthenticationURL(String userId) throws Exception {
+        return null;
+    }
+
+    @Override
+    public UserCredentialsTableEntry getUserCredentials(String userId, String code) throws Exception {
+        return null;
+    }
+
+    @Override
+    public void refreshCredentials() throws Exception {
+    }
+
+    @Override
+    public String getServiceDomain() {
+        return StreamingService.YOUTUBE.getDomainName();
     }
 
     private JsonObject getJsonResponse(String endpoint) throws java.io.IOException, InterruptedException {

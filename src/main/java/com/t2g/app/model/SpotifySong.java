@@ -24,6 +24,7 @@ public class SpotifySong extends Song {
             String uri
     ) {
         super(
+                null,
                 title,
                 artists,
                 album,
@@ -35,6 +36,7 @@ public class SpotifySong extends Song {
 
     public SpotifySong(Track track) {
         super(
+                track.getId(),
                 track.getName(),
                 Arrays
                         .stream(track.getArtists())
