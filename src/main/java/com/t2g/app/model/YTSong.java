@@ -9,7 +9,7 @@ import java.util.Collections;
 import java.util.List;
 
 @EqualsAndHashCode(callSuper = true)
-public class YTSong extends Song{
+public class YTSong extends Song {
     private static final String QUERY_PARAMETER_SEPARATOR = "+";
     private static final String ENCODED_SPACE_CHAR = "%20";
     private static final String YT_INTERNAL_CLASSIFICATION = "- Topic";
